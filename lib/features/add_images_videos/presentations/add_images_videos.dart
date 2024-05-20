@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 
 class AddImagesVideos extends StatefulWidget {
   const AddImagesVideos({super.key});
@@ -15,6 +16,7 @@ class _AddImagesVideosState extends State<AddImagesVideos> {
   File? image;
   File? video;
   final picker = ImagePicker();
+  late VideoPlayerController videoPlayerController;
 
   pickImageFromGallery() async {
     final XFile? pickedImage = await picker.pickImage(
@@ -26,6 +28,21 @@ class _AddImagesVideosState extends State<AddImagesVideos> {
       setState(() {
         image = File(pickedImage.path);
       });
+    }
+  }
+
+  pickVideoFromGallery() async {
+    final XFile? pickedVideo = await picker.pickVideo(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedVideo != null) {
+      video = File(pickedVideo.path);
+      videoPlayerController = VideoPlayerController.file(video!)
+        ..initialize().then((_) {
+          setState(() {});
+          videoPlayerController.pause();
+        });
     }
   }
 
@@ -58,7 +75,7 @@ class _AddImagesVideosState extends State<AddImagesVideos> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                onPressed: () {},
+                onPressed: pickVideoFromGallery,
                 child: const Text('Add Videos'),
               ),
             ],
@@ -76,7 +93,28 @@ class _AddImagesVideosState extends State<AddImagesVideos> {
                     ),
                   ),
                 )
-              : const SizedBox.shrink()
+              : const SizedBox.shrink(),
+          const SizedBox(height: 20),
+          video != null
+              ? videoPlayerController.value.isInitialized
+                  ? SizedBox(
+                      width: 130,
+                      height: 170,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: GestureDetector(
+                            onTap: () {
+                              if (videoPlayerController.value.isPlaying) {
+                                videoPlayerController.pause();
+                              } else {
+                                videoPlayerController.play();
+                              }
+                            },
+                            child: VideoPlayer(videoPlayerController)),
+                      ),
+                    )
+                  : const SizedBox.shrink()
+              : const SizedBox.shrink(),
         ],
       ),
     );
